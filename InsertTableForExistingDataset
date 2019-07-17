@@ -1,0 +1,41 @@
+Public Sub InsertTableForExistingDataset( _
+    lngStartRow As Long, _
+    lngStartCol As Long, _
+    strTableName As String _
+)
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'Formats data set that starts in a given cell as a table
+'
+'PARAMETERS
+'   lngStartRow
+'   lngStartCol
+'   strTableName
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Find the last row/col of the worksheet
+    Dim lngEndRow As Long
+    Dim lngEndCol As Long
+    lngEndRow = FindLastRowOfWorksheet()
+    lngEndCol = FindLastColOfWorksheet()
+    
+    'Select the first cell of the dataset to convert
+    Cells(lngStartRow, lngStartCol).Select
+    
+    'Format the dataset as a table
+    Dim lso As ListObject
+    Set lso = ActiveSheet.ListObjects.Add( _
+        SourceType:=xlSrcRange, _
+        Source:=Range(Cells(1, 1), Cells(lngEndRow, lngEndCol)), _
+        XlListObjectHasHeaders:=xlYes, _
+        TableStyleName:="TableStyleMedium2")
+    lso.Name = strTableName
+End Sub
