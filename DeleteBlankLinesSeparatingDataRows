@@ -1,0 +1,29 @@
+Public Sub DeleteBlankLinesSeparatingDataRows( _
+    lngDataRowSeparatorCol As Long _
+)
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'Selects all blank cells in a given column and deletes their intersecting rows (deletes rows
+'separating the first row of each data row)
+'
+'PARAMETERS
+'   lngDataRowSeparatorCol  Column that contains blanks between the first rows of each data row
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Select the given column
+    Columns(lngDataRowSeparatorCol).Select
+    
+    'Select all blanks cells in the given column
+    Selection.SpecialCells(xlCellTypeBlanks).Select
+    
+    'Delete the intersecting rows for all blank cells
+    Selection.EntireRow.Delete
+End Sub
