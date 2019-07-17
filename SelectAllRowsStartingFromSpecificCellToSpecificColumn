@@ -1,0 +1,35 @@
+Public Function SelectAllRowsStartingFromSpecificCellToSpecificColumn( _
+    lngStartRow As Long, _
+    lngStartCol As Long, _
+    lngEndCol As Long _
+) As Long
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'Selects all rows from the given first row/col to the last row of the worksheet/given last column
+'and return the last row of the worksheet
+'
+'PARAMETERS
+'   lngStartRow     First row of the data to be selected
+'   lngStartCol     First column of the data to be selected
+'   lngEndCol       Last column of the data to be selected
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Store the last row of the worksheet
+    Dim lngEndRow As Long
+    lngEndRow = FindLastRowOfWorksheet()
+    
+    'Copy the data from the given first row/col to the last row of the worksheet/given last
+    'column
+    Range(Cells(lngStartRow, lngStartCol), Cells(lngEndRow, lngEndCol)).Select
+    
+    'Return the last row of the worksheet
+    SelectAllRowsStartingFromSpecificCellToSpecificColumn = lngEndRow
+End Function
