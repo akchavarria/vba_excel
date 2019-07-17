@@ -1,0 +1,35 @@
+Public Function FindLastRowOfWorksheet() As Long
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'Returns the last row of a worksheet that contains any data (including formatting) in any of the
+'cells in any of its columns
+'
+'PARAMETERS
+'   N/A
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Turn off error handling in the event that the entire worksheet is blank
+    On Error Resume Next
+    
+    'Starting from the very last row/col of the worksheet, find the first used cell searching row
+    'by row, right to left, going up the worksheet
+    FindLastRowOfWorksheet = Cells.Find( _
+        What:="*", _
+        After:=Range("A1"), _
+        LookAt:=xlPart, _
+        LookIn:=xlFormulas, _
+        SearchOrder:=xlByRows, _
+        SearchDirection:=xlPrevious, _
+        MatchCase:=False).Row
+    
+    'Turn default error handling back on
+    On Error GoTo 0
+End Function
