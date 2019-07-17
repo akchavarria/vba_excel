@@ -1,0 +1,803 @@
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'PUT THE FOLLOWING CODE IN ITS OWN MODULE
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'CONSTANTS
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+'First row/col of data copied from Kronos website
+Public Const LNG_COPIED_DATA_FIRST_ROW As Long = 24
+Public Const LNG_COPIED_DATA_FIRST_COL As Long = 4
+    
+'Last column of data copied from Kronos website
+Public Const LNG_COPIED_DATA_LAST_COL As Long = 13
+
+'First row/col of column headers from data copy/pasted from Kronos website
+Public Const LNG_COPIED_DATA_HEADER_FIRST_ROW As Long = 17
+
+'First row/col of clean dataset (excluding header row)
+Public Const LNG_CLEAN_DATA_FIRST_ROW As Long = 2
+Public Const LNG_CLEAN_DATA_FIRST_COL As Long = 1
+
+'Column of clean data set that contains blanks separating the first row of each data row
+Public Const LNG_CLEAN_DATA_ROW_SEPARATOR_COL As Long = 1
+
+'Row/col offset from first cell of first row of each data row in clean dataset that contains checklist item name
+Public Const LNG_CLEAN_DATA_OFFSET_CHECKLIST_ITEM_NAME_ROW As Long = 2
+Public Const LNG_CLEAN_DATA_OFFSET_CHECKLIST_ITEM_NAME_COL As Long = 5
+
+'Column of first row in each data row in clean dataset to copy checklist item name to
+Public Const LNG_CLEAN_DATA_CHECKLIST_ITEM_NAME_DEST_COL As Long = 11
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'SUBS AND FUNCTIONS
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+Public Sub CopyOffsetCellToSpecificCellForRowsSeparatedByBlankLines( _
+    lngStartRow As Long, _
+    lngStartCol As Long, _
+    lngRowOffset As Long, _
+    lngColOffset As Long, _
+    lngDestinationCol As Long, _
+    lngDataRowSeparatorCol _
+)
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'Works only with data that is structured as follows: data rows take up multiple rows in Excel (eg.
+'data copied from an HTML table where most of the row is composed of single cells, but one or more
+'of those cells may have been divided into multiple cells vertically causing most of the
+'information to be on row 1, for example, but the information from the divided cells taking up rows
+'2 and 3 with blanks in the cells directly beneath the cells from row 1 that were not divided.
+'There must be at least one column that has all blanks in the rows separating the first row of
+'each data row.
+'Example:
+'
+'       Column1         Column2         Column3         Column4
+'   1:  non-dividedA    non-dividedA    dividedA1       non-dividedA
+'   2:                                  dividedA2
+'   3:                                  dividedA3
+'   4:  non-dividedB    non-dividedB    dividedB1       non-dividedB
+'   5:                                  dividedB2
+'   6:                                  dividedB3
+'   7:  ...
+'This sub is designed to, for example, take data from column 3, row 2 (dividedA2) and copy/paste it
+'into column 5, row 1.
+'
+'PARAMETERS
+'   lngStartRow         First row of dataset (eg. 2 if headers start in cell A1)
+'   lngStartCol         First column of dataset (eg. 1 if headers start in cell A1)
+'   lngRowOffset        Row offset of cell to copy (offset from first cell of each data row; eg. 1
+'                       in above example)
+'   lngColOffset        Column offset of cell to copy (offset from first cell of each data row;
+'                       eg. 2 in above example)
+'   lngDestinationCol   Column where data from offset cell will be pasted (into first row of each
+'                       dataset row; eg. 5 in above example)
+'   lngDataRowSeparatorCol  Column where data only exists in the first row and has all blanks in
+'                           the rows separating the first row of each data row (eg. 1 in the above
+'                           example)
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Declare variable to hold the current row as the dataset is looped through and give it an
+    'initial value of the first row of the data set
+    Dim lngCurrentRow As Long
+    lngCurrentRow = lngStartRow
+    
+    'Determine the last row of the worksheet
+    Dim lngLastRowOfWorksheet As Long
+    lngLastRowOfWorksheet = FindLastRowOfWorksheet()
+    
+    'Loop from the first row to the last in the worksheet
+    Do Until lngCurrentRow > lngLastRowOfWorksheet
+        'Copy data in the offset cell
+        Cells(lngCurrentRow + lngRowOffset, lngStartCol + lngColOffset).Copy
+        
+        'Paste values only into the destination cell of the current row
+        Cells(lngCurrentRow, lngDestinationCol).PasteSpecial _
+            Paste:=xlPasteValues
+        
+        'From the cell intersecting the column that has blanks separating the first row of each
+        'data row and the current data row's first row, determine the first row of the next data
+        'row (same action as pressing CTRL + DOWN ARROW from that cell)
+        lngCurrentRow = Cells(lngCurrentRow, lngStartCol).End(xlDown).Row
+    Loop
+End Sub
+
+Public Sub CopyValuesOnlyToSpecificWorksheetCell( _
+    intDestinationWorksheet As Integer, _
+    lngStartRow As Long, _
+    lngStartCol As Long _
+)
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'There must be a current selection on the current worksheet before this sub is called. Copies
+'values only from the selection and pastes it into a specific cell that intersects a given
+'row/column in a specific worksheet
+'
+'PARAMETERS
+'   intDestinationWorksheet Destination worksheet to copy data into
+'   lngStartRow             Row of destination worksheet to copy data into
+'   lngStartCol             Column of destination worksheet to copy data into
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Copy current selection
+    Selection.Copy
+    
+    'Activate the destination worksheet
+    Worksheets(intDestinationWorksheet).Activate
+    
+    'Paste values only into the given row/col
+    Cells(lngStartRow, lngStartCol).PasteSpecial _
+        Paste:=xlPasteValues
+End Sub
+
+Public Sub DeleteBlankLinesSeparatingDataRows( _
+    lngDataRowSeparatorCol As Long _
+)
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'Selects all blank cells in a given column and deletes their intersecting rows (deletes rows
+'separating the first row of each data row)
+'
+'PARAMETERS
+'   lngDataRowSeparatorCol  Column that contains blanks between the first rows of each data row
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Select the given column
+    Columns(lngDataRowSeparatorCol).Select
+    
+    'Select all blanks cells in the given column
+    Selection.SpecialCells(xlCellTypeBlanks).Select
+    
+    'Delete the intersecting rows for all blank cells
+    Selection.EntireRow.Delete
+End Sub
+
+Public Function FindLastColOfWorksheet() As Long
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'Returns the last column of a worksheet that contains any data (including formatting) in any of the
+'cells in any of its columns
+'
+'PARAMETERS
+'   N/A
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Turn off error handling in the event that the entire worksheet is blank
+    On Error Resume Next
+    
+    'Starting from the very last row/col of the worksheet, find the first used cell searching row
+    'by row, right to left, going up the worksheet
+    FindLastColOfWorksheet = Cells.Find( _
+        What:="*", _
+        After:=Range("A1"), _
+        LookAt:=xlPart, _
+        LookIn:=xlFormulas, _
+        SearchOrder:=xlByRows, _
+        SearchDirection:=xlPrevious, _
+        MatchCase:=False).Column
+    
+    'Turn default error handling back on
+    On Error GoTo 0
+End Function
+
+Public Function FindLastRowOfWorksheet() As Long
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'Returns the last row of a worksheet that contains any data (including formatting) in any of the
+'cells in any of its columns
+'
+'PARAMETERS
+'   N/A
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Turn off error handling in the event that the entire worksheet is blank
+    On Error Resume Next
+    
+    'Starting from the very last row/col of the worksheet, find the first used cell searching row
+    'by row, right to left, going up the worksheet
+    FindLastRowOfWorksheet = Cells.Find( _
+        What:="*", _
+        After:=Range("A1"), _
+        LookAt:=xlPart, _
+        LookIn:=xlFormulas, _
+        SearchOrder:=xlByRows, _
+        SearchDirection:=xlPrevious, _
+        MatchCase:=False).Row
+    
+    'Turn default error handling back on
+    On Error GoTo 0
+End Function
+
+Public Sub InsertTableForExistingDataset( _
+    lngStartRow As Long, _
+    lngStartCol As Long, _
+    strTableName As String _
+)
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'Formats data set that starts in a given cell as a table
+'
+'PARAMETERS
+'   lngStartRow
+'   lngStartCol
+'   strTableName
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Find the last row/col of the worksheet
+    Dim lngEndRow As Long
+    Dim lngEndCol As Long
+    lngEndRow = FindLastRowOfWorksheet()
+    lngEndCol = FindLastColOfWorksheet()
+    
+    'Select the first cell of the dataset to convert
+    Cells(lngStartRow, lngStartCol).Select
+    
+    'Format the dataset as a table
+    Dim lso As ListObject
+    Set lso = ActiveSheet.ListObjects.Add( _
+        SourceType:=xlSrcRange, _
+        Source:=Range(Cells(1, 1), Cells(lngEndRow, lngEndCol)), _
+        XlListObjectHasHeaders:=xlYes, _
+        TableStyleName:="TableStyleMedium2")
+    lso.Name = strTableName
+End Sub
+
+Public Sub KronosToDosAddExtraColumns()
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'Adds extra columns to the clean dataset to be used in pivot tables. Intended to be used on the
+'dataset only after it has been formatting as a table so that formulas entered in the first row
+'will automatically copy down to all the other rows below
+'
+'PARAMETERS
+'   N/A
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Activate the clean dataset worksheet
+    Worksheets(1).Activate
+    
+    'Add headers for the extra columns
+    Cells(1, LNG_CLEAN_DATA_CHECKLIST_ITEM_NAME_DEST_COL + 1).Value = "Approver"
+    Cells(1, LNG_CLEAN_DATA_CHECKLIST_ITEM_NAME_DEST_COL + 2).Value = "Employee"
+    Cells(1, LNG_CLEAN_DATA_CHECKLIST_ITEM_NAME_DEST_COL + 3).Value = "DaysOld"
+    
+    'Populate the first row with formulas that will automatically copy down to rows below
+    Cells(2, LNG_CLEAN_DATA_CHECKLIST_ITEM_NAME_DEST_COL + 1).Value = "=[@[Approver First Name]] & "" "" & [@[Approver Last Name]] & "" ("" & [@[Approver Employee Id]] & "")"""
+    Cells(2, LNG_CLEAN_DATA_CHECKLIST_ITEM_NAME_DEST_COL + 2).Value = "=[@[First Name]] & "" "" & [@[Last Name]] & "" ("" & [@[Employee Id]] & "") - "" & [@[Employee Status]]"
+    Cells(2, LNG_CLEAN_DATA_CHECKLIST_ITEM_NAME_DEST_COL + 3).Value = "=DATEDIF(DATEVALUE(LEFT([@Created],10)),NOW(),""d"")"
+End Sub
+
+Public Sub KronosToDosConsolidateAllDataAndCreatePivotTable()
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'Wrapper sub intended to be called by menu item in Excel ribbon. Performs the entire data
+'transformation process to clean up data once data has been copy/pasted from Kronos and creates
+'pivot tables to analyze the data.
+'
+'PARAMETERS
+'   N/A
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Turn off screen updating so code runs faster
+    Application.ScreenUpdating = False
+    
+    'Perform entire transformation
+    KronosToDosCopyDataFromAllSheetsToNewSheet
+    KronosToDosFormatCopiedData
+    KronosToDosAddExtraColumns
+    KronosToDosCreatePivotTableByChecklist
+    KronosToDosCreatePivotTableByApprover
+    
+    'Turn screen updating back on
+    Application.ScreenUpdating = True
+End Sub
+
+Public Sub KronosToDosCopyDataFromAllSheetsToNewSheet()
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'Loops through all worksheets containing data copied from the Kronos website and copies the values
+'only to a new destination worksheet for the clean data. Before calling this sub, the ONLY
+'worksheets that should exist in the workbook are those containing the copy/pasted contents of the
+'ENTIRE Kronos webpage containing the list of to dos (report to be used in Kronos is the All To Do
+'Items report with a saved setting called "To Do Tracking"
+'
+'PARAMETERS
+'   N/A
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Store the index of the destination worksheet to copy data into
+    Dim intWorksheetCopyDestination As Integer
+    intWorksheetCopyDestination = 1
+    
+    'Create a variable to store the index of the worksheet to copy each iteration of data from and
+    'give it in an initial value of 2 (directly after the new blank destination worksheet that will
+    'be created to paste the data into)
+    Dim intCurrentWorksheet As Integer
+    intCurrentWorksheet = 2
+    
+    'Create a variable to store the row to paste the next iteration of data into and give it an
+    'initial value of 2 (row directly after the headers)
+    Dim lngCurrentRow As Long
+    lngCurrentRow = 2
+    
+    'Create a blank worksheet to copy the to dos into
+    KronosToDosCreateBlankWorksheet
+    
+    'Create a variable to store the number of rows to copy in each iteration
+    Dim lngRowsToCopy As Long
+    
+    'Loop through the worksheets containing the data copied from the Kronos website
+    Do Until intCurrentWorksheet > Worksheets.Count
+        'Activate the current worksheet
+        Worksheets(intCurrentWorksheet).Activate
+        
+        'Select the data to be copied and store the number of rows to be copied
+        lngRowsToCopy = _
+            SelectAllRowsStartingFromSpecificCellToSpecificColumn( _
+                lngStartRow:=LNG_COPIED_DATA_FIRST_ROW, _
+                lngStartCol:=LNG_COPIED_DATA_FIRST_COL, _
+                lngEndCol:=LNG_COPIED_DATA_LAST_COL _
+            ) - LNG_COPIED_DATA_FIRST_ROW + 1
+        
+        'Copy the selected data to the destination worksheet
+        CopyValuesOnlyToSpecificWorksheetCell _
+            intDestinationWorksheet:=intWorksheetCopyDestination, _
+            lngStartRow:=lngCurrentRow, _
+            lngStartCol:=LNG_CLEAN_DATA_FIRST_COL
+        
+        'Update the current row to the next available row after the data that was just copied
+        lngCurrentRow = lngCurrentRow + lngRowsToCopy
+        
+        'Update the current worksheet (loop variable)
+        intCurrentWorksheet = intCurrentWorksheet + 1
+    Loop
+    
+    'Activate the destination worksheet with the clean copied data
+    Worksheets(intWorksheetCopyDestination).Activate
+End Sub
+
+Public Sub KronosToDosCreateBlankWorksheet()
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'Creates a new worksheet with column headers to paste all of the clean data from copied Kronos
+'website data into
+'
+'PARAMETERS
+'   N/A
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Create new worksheet at the beginning (index 1)
+    Sheets.Add _
+        Before:=Worksheets(1)
+        
+    'Name new worksheet
+    Worksheets(1).Name = "Data"
+    
+    'Activate the first worksheet containing the data copied from the Kronos website
+    Worksheets(2).Activate
+    
+    'Copy the header row of the data copied from the Kronos website
+    Range( _
+        Cells(LNG_COPIED_DATA_HEADER_FIRST_ROW, LNG_COPIED_DATA_FIRST_COL), _
+        Cells(LNG_COPIED_DATA_HEADER_FIRST_ROW, LNG_COPIED_DATA_LAST_COL) _
+    ).Copy
+    
+    'Activate the new blank worksheet
+    Worksheets(1).Activate
+    
+    'Paste the values only from the headers copied from the Kronos website data
+    Cells(LNG_CLEAN_DATA_FIRST_ROW - 1, LNG_CLEAN_DATA_FIRST_COL).PasteSpecial _
+        Paste:=xlPasteValues
+    
+    'Change the header of the column containing the checklist name
+    Cells(LNG_CLEAN_DATA_FIRST_ROW - 1, LNG_CLEAN_DATA_OFFSET_CHECKLIST_ITEM_NAME_COL + 1).Value = "Checklist Name"
+    
+    'Create a column header after the last column for checklist item name
+    Cells(LNG_CLEAN_DATA_FIRST_ROW - 1, LNG_CLEAN_DATA_CHECKLIST_ITEM_NAME_DEST_COL).Value = "Checklist Item Name"
+End Sub
+
+Public Sub KronosToDosCreatePivotTableByApprover()
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'Creates a new worksheet with a pivot table based on the clean dataset of Kronos to dos. The pivot
+'table shows checklist items by approver, checklist name, item name, and employee and shows the max
+'number of days old the checklist item is and the number of checklist items at each level.
+'
+'Intended to be called after the first pivot table worksheet is created. This pivot table must live
+'on the worksheet at index 3.
+'
+'PARAMETERS
+'   N/A
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Store the name of the new worksheet that the pivot table will be created on
+    Dim strWorksheetName As String
+    strWorksheetName = "Pivot Table by Approver"
+    
+    'Store the name of table that is source data for the pivot table to be based on
+    Dim strTableName As String
+    strTableName = "tblToDosData"
+    
+    'Store the name of the pivot table
+    Dim strPivotTableName As String
+    strPivotTableName = "pvtByApprover"
+    
+    'Store the first row/col to create the pivot table in
+    Dim lngStartRow As Long
+    Dim lngStartCol As Long
+    lngStartRow = 3
+    lngStartCol = 1
+
+    'Create new worksheet after the first pivot table (index 3)
+    Worksheets.Add _
+        After:=Worksheets(2)
+    
+    'Name the new worksheet
+    Worksheets(3).Name = strWorksheetName
+    
+    'Create a pivot cache of the data on which the pivot table is to be based
+    Dim pvc As PivotCache
+    Set pvc = ActiveWorkbook.PivotCaches.Create( _
+        SourceType:=xlDatabase, _
+        SourceData:=strTableName)
+    
+    'Activate the new worksheet
+    Worksheets(3).Activate
+    
+    'Create a pivot table
+    Dim pvt As PivotTable
+    Set pvt = pvc.CreatePivotTable( _
+        TableDestination:=Cells(lngStartRow, lngStartCol), _
+        TableName:=strPivotTableName)
+    
+
+    'Add the approver as the top-level row field
+    With pvt.PivotFields("Approver")
+        .Orientation = xlRowField
+        .Position = 1
+    End With
+    
+    'Add the checklist item name as the next-level row field
+    With pvt.PivotFields("Checklist Name")
+        .Orientation = xlRowField
+        .Position = 2
+    End With
+    
+    'Add the checklist item name as the next-level row field
+    With pvt.PivotFields("Checklist Item Name")
+        .Orientation = xlRowField
+        .Position = 3
+    End With
+    
+    'Add the employee as the next-level row field
+    With pvt.PivotFields("Employee")
+        .Orientation = xlRowField
+        .Position = 4
+    End With
+    
+    'Add the max of the number of days old as a value field
+    pvt.AddDataField _
+        Field:=pvt.PivotFields("DaysOld"), _
+        Caption:="Max DaysOld", _
+        Function:=xlMax
+    
+    'Add the count of employee IDs as a value field
+    pvt.AddDataField _
+        Field:=pvt.PivotFields("Employee Id"), _
+        Caption:="Count of Employee", _
+        Function:=xlCount
+    
+    'Collapse all checklist item names and approvers
+    pvt.PivotFields("Checklist Item Name").ShowDetail = False
+    pvt.PivotFields("Checklist Name").ShowDetail = False
+    pvt.PivotFields("Approver").ShowDetail = False
+End Sub
+
+Public Sub KronosToDosCreatePivotTableByChecklist()
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'Creates a new worksheet with a pivot table based on the clean dataset of Kronos to dos. The pivot
+'table shows checklist items by checklist name, item name, approver, and employee and shows the max
+'number of days old the checklist item is and the number of checklist items at each level.
+'
+'Intended to be called after the clean data set worksheet is created and before any other pivot
+'table worksheets are created. This pivot table must live on the worksheet at index 2.
+'
+'PARAMETERS
+'   N/A
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Store the name of the new worksheet that the pivot table will be created on
+    Dim strWorksheetName As String
+    strWorksheetName = "Pivot Table by Checklist"
+    
+    'Store the name of table that is source data for the pivot table to be based on
+    Dim strTableName As String
+    strTableName = "tblToDosData"
+    
+    'Store the name of the pivot table
+    Dim strPivotTableName As String
+    strPivotTableName = "pvtByChecklistItem"
+    
+    'Store the first row/col to create the pivot table in
+    Dim lngStartRow As Long
+    Dim lngStartCol As Long
+    lngStartRow = 3
+    lngStartCol = 1
+
+    'Create new worksheet after the clean data worksheet (index 2)
+    Worksheets.Add _
+        After:=Worksheets(1)
+    
+    'Name the new worksheet
+    Worksheets(2).Name = strWorksheetName
+    
+    'Create a pivot cache of the data on which the pivot table is to be based
+    Dim pvc As PivotCache
+    Set pvc = ActiveWorkbook.PivotCaches.Create( _
+        SourceType:=xlDatabase, _
+        SourceData:=strTableName)
+    
+    'Activate the new worksheet
+    Worksheets(2).Activate
+    
+    'Create a pivot table
+    Dim pvt As PivotTable
+    Set pvt = pvc.CreatePivotTable( _
+        TableDestination:=Cells(lngStartRow, lngStartCol), _
+        TableName:=strPivotTableName)
+
+    'Add the checklist name as the top-level row field
+    With pvt.PivotFields("Checklist Name")
+        .Orientation = xlRowField
+        .Position = 1
+    End With
+    
+    'Add the checklist item name as the next-level row field
+    With pvt.PivotFields("Checklist Item Name")
+        .Orientation = xlRowField
+        .Position = 2
+    End With
+    
+    'Add the approver as the next-level row field
+    With pvt.PivotFields("Approver")
+        .Orientation = xlRowField
+        .Position = 3
+    End With
+    
+    'Add the employee as the next-level row field
+    With pvt.PivotFields("Employee")
+        .Orientation = xlRowField
+        .Position = 4
+    End With
+
+    'Add the max of the number of days old as a value field
+    pvt.AddDataField _
+        Field:=pvt.PivotFields("DaysOld"), _
+        Caption:="Max DaysOld", _
+        Function:=xlMax
+
+    'Add the count of employee IDs as a value field
+    pvt.AddDataField _
+        Field:=pvt.PivotFields("Employee Id"), _
+        Caption:="Count of Employee", _
+        Function:=xlCount
+    
+    'Collapse all approvers and checklist item names
+    pvt.PivotFields("Approver").ShowDetail = False
+    pvt.PivotFields("Checklist Item Name").ShowDetail = False
+    pvt.PivotFields("Checklist Name").ShowDetail = False
+End Sub
+
+Public Sub KronosToDosFormatCopiedData()
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'Extracts data from the rows separating the first row of each data row and pastes it into the first
+'row of each data row. Deletes all of the rows separating the first row of each data row and then
+'formats the remaining cleaned up data as a table.
+'
+'PARAMETERS
+'   N/A
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Store the name of the table that the cleaned up data will be formated as
+    Dim strTableName As String
+    strTableName = "tblToDosData"
+    
+    'Copy all of the checklist item names to the last column of the first row of each data row
+    CopyOffsetCellToSpecificCellForRowsSeparatedByBlankLines _
+        lngStartRow:=LNG_CLEAN_DATA_FIRST_ROW, _
+        lngStartCol:=LNG_CLEAN_DATA_FIRST_COL, _
+        lngRowOffset:=LNG_CLEAN_DATA_OFFSET_CHECKLIST_ITEM_NAME_ROW, _
+        lngColOffset:=LNG_CLEAN_DATA_OFFSET_CHECKLIST_ITEM_NAME_COL, _
+        lngDestinationCol:=LNG_CLEAN_DATA_CHECKLIST_ITEM_NAME_DEST_COL, _
+        lngDataRowSeparatorCol:=LNG_CLEAN_DATA_ROW_SEPARATOR_COL
+    
+    'Delete all blank lines separating the first rows of each data row
+    DeleteBlankLinesSeparatingDataRows _
+        lngDataRowSeparatorCol:=LNG_CLEAN_DATA_ROW_SEPARATOR_COL
+    
+    'Format the remaining cleaned up data as a table
+    InsertTableForExistingDataset _
+        lngStartRow:=LNG_CLEAN_DATA_FIRST_ROW - 1, _
+        lngStartCol:=LNG_CLEAN_DATA_FIRST_COL, _
+        strTableName:=strTableName
+End Sub
+
+Public Function SelectAllRowsStartingFromSpecificCellToSpecificColumn( _
+    lngStartRow As Long, _
+    lngStartCol As Long, _
+    lngEndCol As Long _
+) As Long
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'Selects all rows from the given first row/col to the last row of the worksheet/given last column
+'and return the last row of the worksheet
+'
+'PARAMETERS
+'   lngStartRow     First row of the data to be selected
+'   lngStartCol     First column of the data to be selected
+'   lngEndCol       Last column of the data to be selected
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Store the last row of the worksheet
+    Dim lngEndRow As Long
+    lngEndRow = FindLastRowOfWorksheet()
+    
+    'Copy the data from the given first row/col to the last row of the worksheet/given last
+    'column
+    Range(Cells(lngStartRow, lngStartCol), Cells(lngEndRow, lngEndCol)).Select
+    
+    'Return the last row of the worksheet
+    SelectAllRowsStartingFromSpecificCellToSpecificColumn = lngEndRow
+End Function
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'PUT THE FOLLOWING CODE IN THE ThisWorkbook MODULE
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+Private Sub Workbook_BeforeClose(Cancel As Boolean)
+   With Application.CommandBars("Worksheet Menu Bar")
+      On Error Resume Next
+      .Controls("&MyFunction").Delete
+      On Error GoTo 0
+   End With
+End Sub
+
+Private Sub Workbook_Open()
+   Dim objPopUp As CommandBarPopup
+   Dim objBtn As CommandBarButton
+   With Application.CommandBars("Worksheet Menu Bar")
+      On Error Resume Next
+      .Controls("CustomWorkbookFunctions").Delete
+      On Error GoTo 0
+      Set objPopUp = .Controls.Add( _
+         Type:=msoControlPopup, _
+         Before:=.Controls.Count, _
+         temporary:=True)
+   End With
+   objPopUp.Caption = "Custom Workbook Functions"
+   Set objBtn = objPopUp.Controls.Add
+   With objBtn
+      .Caption = "Track Kronos To Dos"
+      .OnAction = "KronosToDosConsolidateAllDataAndCreatePivotTable"
+      .Style = msoButtonCaption
+   End With
+End Sub
