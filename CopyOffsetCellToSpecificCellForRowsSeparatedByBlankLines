@@ -1,0 +1,76 @@
+Public Sub CopyOffsetCellToSpecificCellForRowsSeparatedByBlankLines( _
+    lngStartRow As Long, _
+    lngStartCol As Long, _
+    lngRowOffset As Long, _
+    lngColOffset As Long, _
+    lngDestinationCol As Long, _
+    lngDataRowSeparatorCol _
+)
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'Works only with data that is structured as follows: data rows take up multiple rows in Excel (eg.
+'data copied from an HTML table where most of the row is composed of single cells, but one or more
+'of those cells may have been divided into multiple cells vertically causing most of the
+'information to be on row 1, for example, but the information from the divided cells taking up rows
+'2 and 3 with blanks in the cells directly beneath the cells from row 1 that were not divided.
+'There must be at least one column that has all blanks in the rows separating the first row of
+'each data row.
+'Example:
+'
+'       Column1         Column2         Column3         Column4
+'   1:  non-dividedA    non-dividedA    dividedA1       non-dividedA
+'   2:                                  dividedA2
+'   3:                                  dividedA3
+'   4:  non-dividedB    non-dividedB    dividedB1       non-dividedB
+'   5:                                  dividedB2
+'   6:                                  dividedB3
+'   7:  ...
+'This sub is designed to, for example, take data from column 3, row 2 (dividedA2) and copy/paste it
+'into column 5, row 1.
+'
+'PARAMETERS
+'   lngStartRow         First row of dataset (eg. 2 if headers start in cell A1)
+'   lngStartCol         First column of dataset (eg. 1 if headers start in cell A1)
+'   lngRowOffset        Row offset of cell to copy (offset from first cell of each data row; eg. 1
+'                       in above example)
+'   lngColOffset        Column offset of cell to copy (offset from first cell of each data row;
+'                       eg. 2 in above example)
+'   lngDestinationCol   Column where data from offset cell will be pasted (into first row of each
+'                       dataset row; eg. 5 in above example)
+'   lngDataRowSeparatorCol  Column where data only exists in the first row and has all blanks in
+'                           the rows separating the first row of each data row (eg. 1 in the above
+'                           example)
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Declare variable to hold the current row as the dataset is looped through and give it an
+    'initial value of the first row of the data set
+    Dim lngCurrentRow As Long
+    lngCurrentRow = lngStartRow
+    
+    'Determine the last row of the worksheet
+    Dim lngLastRowOfWorksheet As Long
+    lngLastRowOfWorksheet = FindLastRowOfWorksheet()
+    
+    'Loop from the first row to the last in the worksheet
+    Do Until lngCurrentRow > lngLastRowOfWorksheet
+        'Copy data in the offset cell
+        Cells(lngCurrentRow + lngRowOffset, lngStartCol + lngColOffset).Copy
+        
+        'Paste values only into the destination cell of the current row
+        Cells(lngCurrentRow, lngDestinationCol).PasteSpecial _
+            Paste:=xlPasteValues
+        
+        'From the cell intersecting the column that has blanks separating the first row of each
+        'data row and the current data row's first row, determine the first row of the next data
+        'row (same action as pressing CTRL + DOWN ARROW from that cell)
+        lngCurrentRow = Cells(lngCurrentRow, lngStartCol).End(xlDown).Row
+    Loop
+End Sub
