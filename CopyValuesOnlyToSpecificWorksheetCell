@@ -1,0 +1,35 @@
+Public Sub CopyValuesOnlyToSpecificWorksheetCell( _
+    intDestinationWorksheet As Integer, _
+    lngStartRow As Long, _
+    lngStartCol As Long _
+)
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'DATE       AUTHOR
+'7/17/19    Alejandro
+'
+'APPLICATION:   Excel
+'
+'PURPOSE
+'There must be a current selection on the current worksheet before this sub is called. Copies
+'values only from the selection and pastes it into a specific cell that intersects a given
+'row/column in a specific worksheet
+'
+'PARAMETERS
+'   intDestinationWorksheet Destination worksheet to copy data into
+'   lngStartRow             Row of destination worksheet to copy data into
+'   lngStartCol             Column of destination worksheet to copy data into
+'
+'TICKETS
+'Date       Ticket          Description
+'N/A
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    'Copy current selection
+    Selection.Copy
+    
+    'Activate the destination worksheet
+    Worksheets(intDestinationWorksheet).Activate
+    
+    'Paste values only into the given row/col
+    Cells(lngStartRow, lngStartCol).PasteSpecial _
+        Paste:=xlPasteValues
+End Sub
